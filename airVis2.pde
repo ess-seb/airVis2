@@ -7,7 +7,7 @@ Table airData = new Table();
 
 int rectWidth = 5, rectHeight = 5;
 int newX = 0, newY = -rectHeight, spacerRow = 0, spacerCol = 0;
-int norm = 280;
+float norm = 280, bigest = 150;
 
 boolean isDrawn = false, isLoaded = false;
 color rectColor;
@@ -16,7 +16,7 @@ String fName = "";
 PGraphics preview;
 ControlP5 cp5;
 Textlabel txtLab;
-Textfield normFld, timeFld;
+Textfield normFld, timeFld, bigFld, rHFld, rWFld;
 
 
 
@@ -60,12 +60,37 @@ public void setup(){
        .setSize(100,20)
        .setAutoClear(true)
        ;
+       
+    bigFld = cp5.addTextfield("bigest")
+       .setText("150")
+       .setPosition(100,270)
+       .setSize(100,20)
+       .setAutoClear(true)
+       ;
+       
+       
+    rHFld = cp5.addTextfield("rectHeight")
+       .setText("10")
+       .setPosition(220,320)
+       .setSize(100,20)
+       .setAutoClear(true)
+       ;
+       
+    rWFld = cp5.addTextfield("rectWidth")
+       .setText("10")
+       .setPosition(100,320)
+       .setSize(100,20)
+       .setAutoClear(true)
+       ;
 }
 
 public void draw(){
   background(0);
-  //norm = int(cp5.get(Textfield.class,"norm").getText());
-  norm = int(normFld.getText());
+  norm = float(normFld.getText());
+  bigest = float(normFld.getText());
+  rectHeight = int(rHFld.getText());
+  rectWidth = int(rWFld.getText());
+  
   //timePeriod = int(timeFld.getText());
   
 }
@@ -154,7 +179,7 @@ public void drawDataDiagonal(PGraphics output, Table airData)
       println("proble: " + probe);
       //float coverage = random(100)/100;
       
-      float coverage = probe/150.0;
+      float coverage = probe/bigest;
       println("cov: " + coverage);
       output.fill(0);
       drawDiagonalCell(newX, newY, rectHeight, coverage, output);
@@ -181,6 +206,55 @@ public void drawDiagonalCell(int xx, int yy, int rectHeight, float coverage, PGr
   output.popMatrix();
 }
 
+public void drawDataVBars(PGraphics output, Table airData)
+{
+  output.noStroke();
+  output.colorMode(HSB, 360, 100, 100);
+  for(int i=0; i<airData.getRowCount(); i++){
+    for (int j=0; j<airData.getColumnCount(); j++){
+      int probe = airData.getInt(i, j);
+      newX = j%airData.getColumnCount() * (rectWidth + spacerCol);
+      if(j%airData.getColumnCount() == 0){
+        newY += rectHeight + spacerRow;
+        newX = 0;
+      }
+      
+      float coverage = probe/bigest;
+      output.fill(0);
+      //output.fill(rectColor);
+      output.rect(newX, newY+rectHeight-(rectHeight*coverage), rectWidth, rectHeight*coverage);
+    }
+  }
+}
+
+
+public void drawDataBox(PGraphics output, Table airData)
+{
+  output.noStroke();
+  output.colorMode(HSB, 360, 100, 100);
+  for(int i=0; i<airData.getRowCount(); i++){
+    for (int j=0; j<airData.getColumnCount(); j++){
+      int probe = airData.getInt(i, j);
+      newX = j%airData.getColumnCount() * (rectWidth + spacerCol);
+      if(j%airData.getColumnCount() == 0){
+        newY += rectHeight + spacerRow;
+        newX = 0;
+      }
+      float coverage = probe/bigest;
+      output.fill(0);
+      //output.fill(rectColor);
+      float P = coverage * rectHeight*rectHeight;
+      float m = rectHeight;
+      float a = sqrt(m*m-P);
+      println(m-a + " <= " + coverage );
+      output.pushMatrix();
+      output.translate(newX, newY - m);
+      output.rect((m-a)/2, (m-a)/2, m-a, m-a);
+    }
+  }
+}
+
+
 public void loadFile(int theValue) {
    selectInput("Select a file to process:", "fileSelected");
 }
@@ -201,6 +275,8 @@ public void savePdf(Table airData){
   pdf.beginDraw();
   //drawData2(pdf, airData);
   drawDataDiagonal(pdf, airData);
+  //drawDataVBars(pdf, airData);
+  //drawDataBox(pdf, airData);
   pdf.dispose();
   pdf.endDraw();
 }
